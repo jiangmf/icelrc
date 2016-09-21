@@ -1,0 +1,54 @@
+<html>
+<head>
+    <style type="text/css">
+    body, html {
+        padding: 0; margin: 0;
+    }
+    body::-webkit-scrollbar { 
+        display: none; 
+    }
+
+    textarea {
+        width: 100%;
+        padding: 5px; margin:0;
+        box-sizing: border-box;
+        resize: none;
+        border-top: none;
+        border-left: none;
+        border-right: none;
+        border-bottom: 1px solid #999;
+    }
+    input[type="submit"]{
+        font-weight: bold;
+        bottom: 10px;
+        right: 10px;
+        padding: 10px;
+        border: none;
+        background-color: #4CAF50;
+        color: white;
+        position: fixed;
+    }
+
+    .dropshadow {
+      box-shadow: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
+    }
+    </style>
+</head>
+<body>
+    <form method="post" action="">
+        {% csrf_token %}
+        {{ formset.management_form }}
+        {% for form in formset %}
+            {% for hidden in form.hidden_fields %}
+                {{ hidden }}
+            {% endfor %}
+            <div style="display:flex;">
+                <div style="display:inline-block; width:15%;">{{ form.title }}</div>
+                <div style="display:inline-block; width:15%;">{{ form.artist }}</div>
+                <div style="display:inline-block; width:70%;">{{ form.lyrics }}</div>
+            </div>
+        {% endfor %}
+        <input type="submit" class="dropshadow" value="Submit">
+    </form>
+</body>
+</html>
