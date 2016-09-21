@@ -32,6 +32,7 @@ from icelrc import scrapers
 SCRAPERS = [
     scrapers.LyricalNonsenseScraper(),
     scrapers.AnimeLyricsScraper(),
+    scrapers.VocaloidLyricsScraper(),
     scrapers.VocaLyricsScraper(),
     scrapers.JPopAsiaScraper(),
 ]

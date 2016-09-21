@@ -1,20 +1,22 @@
-import requests
+import requests, re
 from bs4 import BeautifulSoup
-
-class LyricsNotFound(Exception):
-    pass
-
-def pprint(data):
-    import pprint as python_pprint
-    pp = python_pprint.PrettyPrinter(indent=4)
-    pp.pprint(data)
-    return pp.pformat(data)
+from icelrc.utils import pprint, LyricNotFound
 
 class BaseScraper(object):
     base_url = ''
 
     def get_lyrics(self, url):
         raise NotImplementedError('Not Implemented')
+
+    def clean_lyrics(self, lyrics):
+        if not lyrics:
+            raise LyricNotFound('Lyrics Not Found')
+                
+        lyrics = lyrics.strip()
+        lyrics = re.sub('\n{3,}','\n\n', lyrics)
+
+        return lyrics
+
 
 class LyricalNonsenseScraper(BaseScraper):
     base_url = 'www.lyrical-nonsense.com'
@@ -31,20 +33,14 @@ class LyricalNonsenseScraper(BaseScraper):
 
         lyrics = soup.find(id=find_id).get_text()
 
-        if lyrics:
-            return lyrics
-        else:
-            raise LyricsNotFound('Lyrics Not Found')
+        return self.clean_lyrics(lyrics)
 
 class AnimeLyricsScraper(BaseScraper):
     base_url = 'www.animelyrics.com'
 
     def get_lyrics(self, url, lang='romaji'):
-        soup = BeautifulSoup(
-            # <br> tags behave strangely on animelyrics.com for some reason
-            requests.get(url).text.replace('<br>', '&#10;'), 
-            'html.parser'
-            )
+        # <br> tags behave strangely on animelyrics.com for some reason
+        soup = BeautifulSoup( requests.get(url).text.replace('<br>', '&#10;'), 'html.parser')
 
         for dt in soup.find_all('dt'): 
             dt.decompose()
@@ -57,13 +53,10 @@ class AnimeLyricsScraper(BaseScraper):
         lyrics = '\n'.join([
             lrc.get_text() 
             for lrc in soup.find_all('span', {'class': 'lyrics'}) 
-            if find_id in lrc.parent.attrs['class']
+            if find_id in lrc.parent.attrs.get('class', None)
         ])
 
-        if lyrics:
-            return lyrics
-        else:
-            raise LyricsNotFound('Lyrics Not Found')
+        return self.clean_lyrics(lyrics)
 
 class VocaLyricsScraper(BaseScraper):
     base_url = 'voca-lyrics.blogspot.com'
@@ -73,10 +66,18 @@ class VocaLyricsScraper(BaseScraper):
 
         lyrics = soup.find('div',{'class': 'post-body'}).get_text()
 
-        if lyrics:
-            return lyrics
-        else:
-            raise LyricsNotFound('Lyrics Not Found')
+        return self.clean_lyrics(lyrics)
+
+class VocaloidLyricsScraper(BaseScraper):
+    base_url = 'vocaloidlyrics.wikia.com'
+
+    def get_lyrics(self, url, lang='romaji'):
+        soup = BeautifulSoup(requests.get(url).text, 'html.parser')
+
+        lyrics = soup.find('table', {'style' : 'width:100%'}).get_text()
+
+        return self.clean_lyrics(lyrics)
+
 
 class JPopAsiaScraper(BaseScraper):
     base_url = 'www.jpopasia.com'
@@ -84,21 +85,18 @@ class JPopAsiaScraper(BaseScraper):
     def get_lyrics(self, url, lang='romaji'):
         soup = BeautifulSoup(requests.get(url).text, 'html.parser')
 
-        # new layout
         if soup.find(id='tabLyrics'):
+            # new layout
             find_id = {
                 'romaji' : 'romaji_1'
             }.get(lang)
 
             lyrics = soup.find(id=find_id).get_text()
         else:
+            # old layout
             for div in soup.find_all('div',{'class': 'col-sm-4'}):
                 if lang.title() in div.get_text():
                     lyrics = div.get_text()
                     break
 
-
-        if lyrics:
-            return lyrics
-        else:
-            raise LyricsNotFound('Lyrics Not Found')
+        return self.clean_lyrics(lyrics)

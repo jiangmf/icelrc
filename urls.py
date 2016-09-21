@@ -15,7 +15,20 @@ Including another URLconf
 """
 from django.conf.urls import include, url
 from django.contrib import admin
+from django.apps import apps
+
+from icelrc import views
+
+class CustomModelAdmin(admin.ModelAdmin):
+    def __init__(self, model, admin_site):
+        self.list_display = [model.__str__] + [field.name for field in model._meta.fields]
+        super(CustomModelAdmin, self).__init__(model, admin_site)
+
+
+for model in apps.get_app_config('icelrc').get_models():
+   admin.site.register(model, CustomModelAdmin)
 
 urlpatterns = [
     url(r'^admin/', include(admin.site.urls)),
+    url(r'^', views.lyrics_admin),
 ]
