@@ -85,6 +85,8 @@ class JPopAsiaScraper(BaseScraper):
     def get_lyrics(self, url, lang='romaji'):
         soup = BeautifulSoup(requests.get(url).text, 'html.parser')
 
+        lyrics = ""
+
         if soup.find(id='tabLyrics'):
             # new layout
             find_id = {

@@ -13,5 +13,6 @@ def search(search_term):
                     return scraper.get_lyrics(url)
                 except LyricNotFound:
                     pass
-                except:
-                    import traceback; traceback.print_exc();
+                except Exception as e:
+                    print("ERROR SCRAPING LYRICS: ", e)
+                    # import traceback; traceback.print_exc();
